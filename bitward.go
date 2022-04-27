@@ -15,6 +15,7 @@ type BW struct {
 }
 
 func New() (*BW, error) {
+
 	var bw BW
 	status, err := bw.Status()
 	if err != nil {
