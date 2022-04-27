@@ -57,6 +57,7 @@ func New() (*BW, error) {
 }
 
 func (bw *BW) sessionCommand(name string, arg ...string) *exec.Cmd {
+
 	cmd := exec.Command(name, arg...)
 	if len(bw.session) > 0 {
 		cmd.Args = append(cmd.Args, "--session", bw.session)
