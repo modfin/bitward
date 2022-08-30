@@ -15,14 +15,20 @@ type BW struct {
 }
 
 func New() (*BW, error) {
-	return NewWithConfig(false, false)
-}
-
-func NewWithConfig(useEnv bool, useApiKey bool) (*BW, error) {
 	var bw BW
 	status, err := bw.Status()
 	if err != nil {
 		return nil, err
+	}
+
+	_, clientIdEnvExists := os.LookupEnv("BW_CLIENTID")
+	_, clientSecretEnvExists := os.LookupEnv("BW_CLIENTSECRET")
+	_, bwPassEnvExists := os.LookupEnv("BW_PASSWORD")
+
+	bwPassEnv := ""
+	if bwPassEnvExists {
+		// standardizing on BW_PASSWORD since that's what https://bitwarden.com/help/cli/#unlock suggests
+		bwPassEnv = " --passwordenv BW_PASSWORD"
 	}
 
 	var cmd *exec.Cmd
@@ -30,16 +36,11 @@ func NewWithConfig(useEnv bool, useApiKey bool) (*BW, error) {
 	case "unlocked":
 		return &bw, nil
 	case "locked":
-		if useEnv {
-			// standardizing on BW_PASSWORD since that's what https://bitwarden.com/help/cli/#unlock suggests
-			cmd = exec.Command("bw", "unlock", "--raw", "--passwordenv", "BW_PASSWORD")
-		} else {
-			cmd = exec.Command("bw", "unlock", "--raw")
-		}
+		cmd = exec.Command("/bin/sh", "-c", fmt.Sprintf("bw unlock --raw%s", bwPassEnv))
 	case "unauthenticated":
-		if useApiKey {
+		if clientIdEnvExists && clientSecretEnvExists {
 			// bw will read from env as per https://bitwarden.com/help/personal-api-key/#authenticate-using-your-api-key
-			cmd = exec.Command("/bin/sh", "-c", "bw login --raw --apikey && bw unlock --raw --passwordenv BW_PASSWORD")
+			cmd = exec.Command("/bin/sh", "-c", fmt.Sprintf("bw login --raw --apikey && bw unlock --raw%s", bwPassEnv))
 		} else {
 			cmd = exec.Command("bw", "login", "--raw")
 		}
