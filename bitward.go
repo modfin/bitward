@@ -15,7 +15,10 @@ type BW struct {
 }
 
 func New() (*BW, error) {
+	return NewWithConfig(false, false)
+}
 
+func NewWithConfig(useEnv bool, useApiKey bool) (*BW, error) {
 	var bw BW
 	status, err := bw.Status()
 	if err != nil {
@@ -27,9 +30,19 @@ func New() (*BW, error) {
 	case "unlocked":
 		return &bw, nil
 	case "locked":
-		cmd = exec.Command("bw", "unlock", "--raw")
+		if useEnv {
+			// standardizing on BW_PASSWORD since that's what https://bitwarden.com/help/cli/#unlock suggests
+			cmd = exec.Command("bw", "unlock", "--raw", "--passwordenv BW_PASSWORD")
+		} else {
+			cmd = exec.Command("bw", "unlock", "--raw")
+		}
 	case "unauthenticated":
-		cmd = exec.Command("bw", "login", "--raw")
+		if useApiKey {
+			// bw will read from env as per https://bitwarden.com/help/personal-api-key/#authenticate-using-your-api-key
+			cmd = exec.Command("bw", "login", "--raw", "--apikey")
+		} else {
+			cmd = exec.Command("bw", "login", "--raw")
+		}
 	default:
 		return nil, fmt.Errorf("unknown vault status `%s`", status.Status)
 	}
