@@ -34,7 +34,7 @@ func New() (*BW, error) {
 	var cmd *exec.Cmd
 	switch status.Status {
 	case "unlocked":
-		_, err = bw.Sync()
+		err = bw.Sync()
 		if err != nil {
 			return nil, fmt.Errorf("faild sync of unlocked bw, error: %w", err)
 		}
@@ -71,7 +71,7 @@ func New() (*BW, error) {
 		return nil, fmt.Errorf("authentication failed: vault status `%s`", status.Status)
 	}
 
-	_, err = bw.Sync()
+	err = bw.Sync()
 	if err != nil {
 		return nil, fmt.Errorf("faild sync of unlocked bw, error: %w", err)
 	}
