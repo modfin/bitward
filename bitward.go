@@ -99,9 +99,16 @@ func (bw *BW) Status() (msg StatusMsg, err error) {
 	return msg, output(cmd, &msg)
 }
 
-func (bw *BW) Sync() (msg StatusMsg, err error) {
+func (bw *BW) Sync() error {
 	cmd := bw.sessionCommand("bw", "sync")
-	return msg, output(cmd, &msg)
+	_, err := cmd.Output()
+	if err != nil {
+		if e, ok := err.(*exec.ExitError); ok {
+			err = fmt.Errorf("%w: %s", err, string(e.Stderr))
+		}
+		return fmt.Errorf("%s: %w", cmd.String(), err)
+	}
+	return nil
 }
 
 type Item struct {
