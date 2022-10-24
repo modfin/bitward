@@ -34,6 +34,10 @@ func New() (*BW, error) {
 	var cmd *exec.Cmd
 	switch status.Status {
 	case "unlocked":
+		_, err = bw.Sync()
+		if err != nil {
+			return nil, fmt.Errorf("faild sync of unlocked bw, error: %w", err)
+		}
 		return &bw, nil
 	case "locked":
 		cmd = exec.Command("/bin/sh", "-c", fmt.Sprintf("bw unlock --raw%s", bwPassEnv))
@@ -67,6 +71,10 @@ func New() (*BW, error) {
 		return nil, fmt.Errorf("authentication failed: vault status `%s`", status.Status)
 	}
 
+	_, err = bw.Sync()
+	if err != nil {
+		return nil, fmt.Errorf("faild sync of unlocked bw, error: %w", err)
+	}
 	return &bw, nil
 }
 
@@ -88,6 +96,11 @@ type StatusMsg struct {
 
 func (bw *BW) Status() (msg StatusMsg, err error) {
 	cmd := bw.sessionCommand("bw", "status")
+	return msg, output(cmd, &msg)
+}
+
+func (bw *BW) Sync() (msg StatusMsg, err error) {
+	cmd := bw.sessionCommand("bw", "sync")
 	return msg, output(cmd, &msg)
 }
 
